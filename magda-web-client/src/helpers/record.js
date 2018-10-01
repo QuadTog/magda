@@ -1,6 +1,7 @@
 // @flow
 import getDateString from "./getDateString";
 import type { FetchError } from "../types";
+import weightedMean from "weighted-mean";
 // dataset query:
 //aspect=dcat-dataset-strings&optionalAspect=dcat-distribution-strings&optionalAspect=dataset-distributions&optionalAspect=temporal-coverage&dereference=true&optionalAspect=dataset-publisher&optionalAspect=source
 
@@ -183,6 +184,16 @@ const defaultDistributionAspect = {
     }
 };
 
+function getFormatString(aspects) {
+    const defaultString = "Unknown format";
+    if (!aspects || typeof aspects !== "object") return defaultString;
+    const dcatAspect = aspects["dcat-distribution-strings"];
+    const formatAspect = aspects["dataset-format"];
+    if (formatAspect && formatAspect["format"]) return formatAspect["format"];
+    if (dcatAspect && dcatAspect["format"]) return dcatAspect["format"];
+    return defaultString;
+}
+
 export function parseDistribution(
     record?: RawDistribution
 ): ParsedDistribution {
@@ -195,7 +206,7 @@ export function parseDistribution(
 
     const info = aspects["dcat-distribution-strings"];
 
-    const format = info.format || "Unknown format";
+    const format = getFormatString(aspects);
     const downloadURL = info.downloadURL || null;
     const accessURL = info.accessURL || null;
     const updatedDate = info.modified ? getDateString(info.modified) : null;
@@ -265,8 +276,15 @@ export function parseDataset(dataset?: RawDataset): ParsedDataset {
         ? aspects["source"]["name"]
         : defaultDatasetAspects["source"]["name"];
 
-    const linkedDataRating: number = aspects["dataset-linked-data-rating"]
-        ? aspects["dataset-linked-data-rating"]["stars"]
+    function calcQuality(qualityAspect) {
+        const ratings = Object.keys(qualityAspect)
+            .map(key => qualityAspect[key])
+            .map(aspectRating => [aspectRating.score, aspectRating.weighting]);
+        return weightedMean(ratings);
+    }
+
+    const linkedDataRating: number = aspects["dataset-quality-rating"]
+        ? calcQuality(aspects["dataset-quality-rating"])
         : 0;
 
     const distributions = distribution["distributions"].map(d => {
@@ -300,7 +318,7 @@ export function parseDataset(dataset?: RawDataset): ParsedDataset {
             title: d["name"],
             downloadURL: info.downloadURL || null,
             accessURL: info.accessURL || null,
-            format: info.format || "Unknown format",
+            format: getFormatString(distributionAspects),
             license:
                 !info.license || info.license === "notspecified"
                     ? "License restrictions unknown"

@@ -45,11 +45,7 @@
     <![endif]-->
 
     <script src="/assets/third-party.js"></script>
-    <% if(process.env.REACT_APP_IS_STAGING == 1) {%>
-    <script src="https://s3-ap-southeast-2.amazonaws.com/data-gov-au-frontpage/staging/homepage-config.js"></script>
-    <%}else{%>
-    <script src="https://s3-ap-southeast-2.amazonaws.com/data-gov-au-frontpage/%NODE_ENV%/homepage-config.js"></script>
-    <%}%>
+    <script src="/assets/homepage/homepage-config.js"></script>
     <script src="/server-config.js"></script>
     <title>Search</title>
 </head>
@@ -58,6 +54,11 @@
 <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KPSGPGD" height="0" width="0"
         style="display:none;visibility:hidden"></iframe>
 <!-- End Google Analytics Tag Manager Code-->
+<noscript>
+    For full functionality of this site it is necessary to enable JavaScript.
+    Here are the <a href="https://www.enable-javascript.com/" target="_blank">
+    instructions how to enable JavaScript in your web browser</a>.
+</noscript>
 <div id="root"></div>
 </body>
 </html>
